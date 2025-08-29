@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>民法体系图谱</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4efe9 100%);
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+        }
+        h2 {
+            color: #2980b9;
+            text-align: center;
+            margin-top: 0;
+        }
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            margin: 30px auto;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ddd;
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 20px;
+            transition: 0.3s;
+            font-size: 16px;
+            font-weight: 500;
+            color: #555;
+        }
+        .tab button:hover {
+            background-color: #d6eaf8;
+        }
+        .tab button.active {
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            font-weight: bold;
+        }
+        .tabcontent {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            background: #fff;
+            animation: fadeEffect 0.5s;
+        }
+        @keyframes fadeEffect {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .legend-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 15px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>民法体系图谱</h1>
+
+        <div class="tab">
+            <button class="tablinks active" onclick="openTab(event, 'System')">体系总览</button>
+            <button class="tablinks" onclick="openTab(event, 'Civil')">民法详解</button>
+            <button class="tablinks" onclick="openTab(event, 'History')">历史沿革</button>
+            <button class="tablinks" onclick="openTab(event, 'Principles')">核心原则</button>
+        </div>
+
+        <div id="System" class="tabcontent" style="display:block;">
+            <h2>公法、私法与经济法体系</h2>
+            <div id="system-chart" class="chart-container"></div>
+        </div>
+
+        <div id="Civil" class="tabcontent">
+            <h2>《民法典》七编体系</h2>
+            <div id="civil-chart" class="chart-container"></div>
+            <div class="legend-container" id="civil-legend"></div>
+        </div>
+
+        <div id="History" class="tabcontent">
+            <h2>中国民法发展历程</h2>
+            <div id="history-chart" class="chart-container"></div>
+        </div>
+
+        <div id="Principles" class="tabcontent">
+            <h2>民法核心原则关系</h2>
+            <div id="principles-chart" class="chart-container"></div>
+        </div>
+        
+        <div class="footer">
+            <p>民法体系图谱</p>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // 切换标签页的函数
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+            
+            // 渲染图表（如果需要）
+            if (tabName === 'System' && !window.systemChartRendered) {
+                renderSystemChart();
+                window.systemChartRendered = true;
+            } else if (tabName === 'Civil' && !window.civilChartRendered) {
+                renderCivilChart();
+                window.civilChartRendered = true;
+            } else if (tabName === 'History' && !window.historyChartRendered) {
+                renderHistoryChart();
+                window.historyChartRendered = true;
+            } else if (tabName === 'Principles' && !window.principlesChartRendered) {
+                renderPrinciplesChart();
+                window.principlesChartRendered = true;
+            }
+            
+            // 调整图表大小
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 100);
+        }
+
+        // 初始化变量
+        window.systemChartRendered = false;
+        window.civilChartRendered = false;
+        window.historyChartRendered = false;
+        window.principlesChartRendered = false;
+
+        // 渲染体系总览图
+        function renderSystemChart() {
+            var chartDom = document.getElementById('system-chart');
+            var myChart = echarts.init(chartDom);
+            var option;
+
+            option = {
+                tooltip: {
+                    trigger: 'item',
+                    triggerOn: 'click',
+                    formatter: function (params) {
+                        return params.name;
+                    }
+                },
+                series: [{
+                    type: 'tree',
+                    data: [{
+                        name: '法律体系',
+                        itemStyle: {
+                            color: '#2c3e50'
+                        },
+                        children: [{
+                            name: '公法 (Public Law)',
+                            itemStyle: {
+                                color: '#3498db'
+                            },
+                            children: [
+                                { 
+                                    name: '宪法 (Constitutional Law)\n- 国家根本制度\n- 公民基本权利',
+                                    itemStyle: {
+                                        color: '#2980b9'
+                                    }
+                                },
+                                { 
+                                    name: '行政法 (Administrative Law)\n- 调整行政管理关系',
+                                    itemStyle: {
+                                        color: '#2980b9'
+                                    }
+                                },
+                                { 
+                                    name: '刑法 (Criminal Law)\n- 犯罪与刑罚',
+                                    itemStyle: {
+                                        color: '#2980b9'
+                                    }
+                                },
+                                {
+                                    name: '经济法 (Economic Law)',
+                                    itemStyle: {
+                                        color: '#2980b9'
+                                    },
+                                    children: [
+                                        { 
+                                            name: '竞争法\n- 反不正当竞争法\n- 反垄断法',
+                                            itemStyle: {
+                                                color: '#1abc9c'
+                                            }
+                                        },
+                                        { 
+                                            name: '消费者权益保护法',
+                                            itemStyle: {
+                                                color: '#1abc9c'
+                                            }
+                                        },
+                                        { 
+                                            name: '反垄断法',
+                                            itemStyle: {
+                                                color: '#1abc9c'
+                                            }
+                                        },
+                                        { 
+                                            name: '价格法',
+                                            itemStyle: {
+                                                color: '#1abc9c'
+                                            }
+                                        },
+                                        { 
+                                            name: '环境保护法',
+                                            itemStyle: {
+                                                color: '#1abc9c'
+                                            }
+                                        },
+                                        { 
+                                            name: '劳动法',
+                                            itemStyle: {
+                                                color: '#1abc9c'
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, {
+                            name: '私法 (Private Law)',
+                            itemStyle: {
+                                color: '#e74c3c'
+                            },
+                            children: [{
+                                name: '民法 (Civil Law)\n- 平等主体关系\n- 私法之母',
+                                itemStyle: {
+                                    color: '#c0392b'
+                                },
+                                children: [
+                                    { 
+                                        name: '合同法 (典型合同)',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '物权法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '人格权法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '婚姻家庭法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '继承法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '侵权责任法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    }
+                                ]
+                            }, {
+                                name: '商法 (Commercial Law)\n- 民法特别法',
+                                itemStyle: {
+                                    color: '#c0392b'
+                                },
+                                children: [
+                                    { 
+                                        name: '公司法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '证券法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '票据法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '保险法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    },
+                                    { 
+                                        name: '海商法',
+                                        itemStyle: {
+                                            color: '#e67e22'
+                                        }
+                                    }
+                                ]
+                            }]
+                        }]
+                    }],
+                    top: '10%',
+                    bottom: '10%',
+                    layout: 'orthogonal',
+                    orient: 'LR',
+                    symbolSize: 10,
+                    initialTreeDepth: 2,
+                    lineStyle: {
+                        color: '#aaa',
+                        width: 2,
+                        curveness: 0.1
+                    },
+                    label: {
+                        position: 'left',
+                        verticalAlign: 'middle',
+                        align: 'right',
+                        fontSize: 14,
+                        lineHeight: 20,
+                        color: '#2c3e50',
+                        fontWeight: 'bold',
+                        formatter: function (params) {
+                            return params.name.split('\n')[0];
+                        }
+                    },
+                    leaves: {
+                        label: {
+                            position: 'right',
+                            align: 'left'
+                        }
+                    },
+                    emphasis: {
+                        focus: 'descendant',
+                        itemStyle: {
+                            color: '#16a085'
+                        }
+                        },
+                    expandAndCollapse: true,
+                    animationDuration: 550,
+                    animationDurationUpdate: 750
+                }]
+            };
+
+            myChart.setOption(option);
+            
+            // 窗口调整大小时重置图表尺寸
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 渲染民法详解图 - 使用环形图设计
+        function renderCivilChart() {
+            var chartDom = document.getElementById('civil-chart');
+            var myChart = echarts.init(chartDom);
+            var option;
+
+            // 定义数据
+            var civilData = [
+                {name: '第一编 总则', value: 10, color: '#3498db', info: '- 主体: 自然人/法人/非法人组织\n- 客体: 物/行为/智力成果\n- 民事权利与义务\n- 法律责任'},
+                {name: '第二编 物权', value: 10, color: '#2ecc71', info: '- 自物权: 所有权\n- 他物权: 用益物权、担保物权\n'},
+                {name: '第三编 合同与债权', value: 10, color: '#e74c3c', info: '- 合同\n- 无因管理\n- 不当得利\n- 拾得物\n- 侵权'},
+                {name: '第四编 婚姻家庭', value: 10, color: '#f1c40f', info: '- 婚姻制度\n- 夫妻关系\n- 亲子与收养'},
+                {name: '第五编 继承', value: 10, color: '#1abc9c', info: '- 法定继承\n- 遗嘱继承'},
+                {name: '第六编 人格权', value: 10, color: '#9b59b6', info: '- 生命权/身体权/健康权\n- 姓名权/肖像权/隐私权'},
+                {name: '第七编 侵权责任', value: 10, color: '#d35400', info: '- 一般侵权(过错责任)\n- 特殊侵权'}
+            ];
+
+            option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return '<b>' + params.name + '</b><br/>' + params.data.info.replace(/\n/g, '<br/>');
+                    }
+                },
+                title: {
+                    text: '《民法典》',
+                    subtext: '七编体系',
+                    left: 'center',
+                    top: 'center',
+                    textStyle: {
+                        fontSize: 24,
+                        fontWeight: 'bold',
+                        color: '#2c3e50'
+                    },
+                    subtextStyle: {
+                        fontSize: 16,
+                        color: '#7f8c8d'
+                    }
+                },
+                series: [{
+                    name: '《民法典》',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['50%', '50%'],
+                    data: civilData.map(item => {
+                        return {
+                            value: item.value,
+                            name: item.name,
+                            itemStyle: { color: item.color },
+                            info: item.info
+                        };
+                    }),
+                    label: {
+                        show: true,
+                        formatter: '{b}',
+                        position: 'outside',
+                        fontSize: 14,
+                        fontWeight: 'bold'
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        },
+                        label: {
+                            show: true,
+                            fontSize: 16,
+                            fontWeight: 'bold'
+                        }
+                    },
+                    animationType: 'scale',
+                    animationEasing: 'elasticOut',
+                    animationDelay: function (idx) {
+                        return Math.random() * 200;
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+            
+            // 创建图例
+            createCivilLegend(civilData);
+            
+            // 窗口调整大小时重置图表尺寸
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 创建民法图例
+        function createCivilLegend(data) {
+            var legendContainer = document.getElementById('civil-legend');
+            legendContainer.innerHTML = '';
+            
+            data.forEach(function(item) {
+                var legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                
+                var colorBox = document.createElement('div');
+                colorBox.className = 'legend-color';
+                colorBox.style.backgroundColor = item.color;
+                
+                var text = document.createElement('span');
+                text.textContent = item.name;
+                
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(text);
+                legendContainer.appendChild(legendItem);
+            });
+        }
+
+        // 渲染历史沿革图
+        function renderHistoryChart() {
+            var chartDom = document.getElementById('history-chart');
+            var myChart = echarts.init(chartDom);
+            var option;
+
+            option = {
+                title: {
+                    text: '中国民法发展历程',
+                    left: 'center',
+                    textStyle: {
+                        color: '#2c3e50',
+                        fontSize: 18
+                    }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        return params[0].name + '<br/>' + 
+                               params[0].data.info;
+                    }
+                },
+                grid: {
+                    left: '5%',
+                    right: '5%',
+                    bottom: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    name: '时间',
+                    nameLocation: 'middle',
+                    nameGap: 30,
+                    axisLine: {
+                        lineStyle: {
+                            color: '#7f8c8d'
+                        }
+                    },
+                    data: ['1950', '1986', '1999', '2007', '2017', '2020']
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '发展',
+                    nameTextStyle: {
+                        padding: [0, 0, 0, 20]
+                    },
+                    max: 100,
+                    axisLine: {
+                        show: true,
+                        lineStyle: {
+                            color: '#7f8c8d'
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            type: 'dashed'
+                        }
+                    }
+                },
+                series: [{
+                    name: '立法发展',
+                    type: 'line',
+                    symbolSize: 12,
+                    lineStyle: {
+                        width: 4,
+                        color: '#3498db'
+                    },
+                    itemStyle: {
+                        color: '#2980b9'
+                    },
+                    data: [
+                        {value: 10, name: '1950', itemStyle: {color: '#1abc9c'}, info: '第一部《婚姻法》颁布\n新中国的第一部法律'},
+                        {value: 30, name: '1986', itemStyle: {color: '#e74c3c'}, info: '《民法通则》颁布\n民法体系初步建立'},
+                        {value: 50, name: '1999', itemStyle: {color: '#e67e22'}, info: '《合同法》颁布\n统一合同法律制度'},
+                        {value: 70, name: '2007', itemStyle: {color: '#f1c40f'}, info: '《物权法》颁布\n明确财产权保护'},
+                        {value: 85, name: '2017', itemStyle: {color: '#2ecc71'}, info: '《民法总则》实施\n民法典编纂奠基'},
+                        {value: 100, name: '2020', itemStyle: {color: '#3498db'}, info: '《民法典》颁布\n中国民法体系完善'}
+                    ]
+                }]
+            };
+
+            myChart.setOption(option);
+            
+            // 窗口调整大小时重置图表尺寸
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 渲染核心原则图
+        function renderPrinciplesChart() {
+            var chartDom = document.getElementById('principles-chart');
+            var myChart = echarts.init(chartDom);
+            var option;
+
+            option = {
+                title: {
+                    text: '民法核心原则关系图',
+                    left: 'center',
+                    textStyle: {
+                        color: '#2c3e50',
+                        fontSize: 18
+                    }
+                },
+                tooltip: {},
+                legend: {
+                    data: ['民法核心原则'],
+                    top: 30,
+                    textStyle: {
+                        fontWeight: 'bold'
+                    }
+                },
+                animationDurationUpdate: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                series: [{
+                    type: 'graph',
+                    layout: 'force',
+                    categories: [{ name: '民法核心原则' }],
+                    symbolSize: 80,
+                    focusNodeAdjacency: true,
+                    roam: true,
+                    edgeSymbol: ['circle', 'arrow'],
+                    edgeSymbolSize: [4, 10],
+                    force: {
+                        repulsion: 200,
+                        edgeLength: 100
+                    },
+                    draggable: true,
+                    data: [{
+                        name: '平等原则',
+                        category: 0,
+                        symbolSize: 70,
+                        itemStyle: {
+                            color: '#1abc9c'
+                        }
+                    }, {
+                        name: '意思自治',
+                        category: 0,
+                        symbolSize: 80,
+                        itemStyle: {
+                            color: '#3498db'
+                        }
+                    }, {
+                        name: '公平原则',
+                        category: 0,
+                        symbolSize: 65,
+                        itemStyle: {
+                            color: '#9b59b6'
+                        }
+                    }, {
+                        name: '诚信原则',
+                        category: 0,
+                        symbolSize: 75,
+                        itemStyle: {
+                            color: '#e74c3c'
+                        }
+                    }, {
+                        name: '公序良俗',
+                        category: 0,
+                        symbolSize: 60,
+                        itemStyle: {
+                            color: '#f39c12'
+                        }
+                    }],
+                    links: [{
+                        source: '平等原则',
+                        target: '意思自治',
+                        value: '基础',
+                        lineStyle: {
+                            width: 3,
+                            color: '#7f8c8d'
+                        }
+                    }, {
+                        source: '意思自治',
+                        target: '公平原则',
+                        value: '限制',
+                        lineStyle: {
+                            width: 3,
+                            color: '#7f8c8d'
+                        }
+                    }, {
+                        source: '公平原则',
+                        target: '诚信原则',
+                        value: '补充',
+                        lineStyle: {
+                            width: 3,
+                            color: '#7f8c8d'
+                        }
+                    }, {
+                        source: '诚信原则',
+                        target: '公序良俗',
+                        value: '关联',
+                        lineStyle: {
+                            width: 3,
+                            color: '#7f8c8d'
+                        }
+                    }, {
+                        source: '公序良俗',
+                        target: '意思自治',
+                        value: '限制',
+                        lineStyle: {
+                            width: 3,
+                            color: '#7f8c8d'
+                        }
+                    }, {
+                        source: '平等原则',
+                        target: '公平原则',
+                        value: '基础',
+                        lineStyle: {
+                            width: 3,
+                            color: '#7f8c8d'
+                        }
+                    }],
+                    lineStyle: {
+                        opacity: 0.9,
+                        width: 2,
+                        curveness: 0.2
+                    },
+                    label: {
+                        show: true,
+                        position: 'inside',
+                        fontWeight: 'bold',
+                        fontSize: 15,
+                        color: '#fff'
+                    },
+                    emphasis: {
+                        lineStyle: {
+                            width: 5
+                        }
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+            
+            // 窗口调整大小时重置图表尺寸
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        // 页面加载后默认渲染第一个图表
+        window.onload = function() {
+            renderSystemChart();
+            window.systemChartRendered = true;
+            
+            // 添加窗口调整事件监听器
+            window.addEventListener('resize', function() {
+                const charts = [
+                    document.getElementById('system-chart'),
+                    document.getElementById('civil-chart'),
+                    document.getElementById('history-chart'),
+                    document.getElementById('principles-chart')
+                ];
+                
+                charts.forEach(chart => {
+                    if (chart) {
+                        const instance = echarts.getInstanceByDom(chart);
+                        if (instance) {
+                            instance.resize();
+                        }
+                    }
+                });
+            });
+        };
+    </script>
+</body>
+</html>
