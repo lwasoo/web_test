@@ -40,6 +40,15 @@
             border-radius: 8px;
             background: #fff;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            color: #7f8c8d;
         }
         .tab {
             overflow: hidden;
@@ -104,6 +113,43 @@
             margin-right: 8px;
             border-radius: 3px;
         }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 20px;
+            }
+            .chart-container {
+                height: 400px;
+            }
+            .tab button {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .chart-container {
+                height: 300px;
+            }
+            .tab {
+                display: flex;
+                flex-direction: column;
+            }
+            .tab button {
+                width: 100%;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -119,27 +165,35 @@
 
         <div id="System" class="tabcontent" style="display:block;">
             <h2>公法、私法与经济法体系</h2>
-            <div id="system-chart" class="chart-container"></div>
+            <div id="system-chart" class="chart-container">
+                <div class="loading">图表加载中...</div>
+            </div>
         </div>
 
         <div id="Civil" class="tabcontent">
             <h2>《民法典》七编体系</h2>
-            <div id="civil-chart" class="chart-container"></div>
+            <div id="civil-chart" class="chart-container">
+                <div class="loading">图表加载中...</div>
+            </div>
             <div class="legend-container" id="civil-legend"></div>
         </div>
 
         <div id="History" class="tabcontent">
             <h2>中国民法发展历程</h2>
-            <div id="history-chart" class="chart-container"></div>
+            <div id="history-chart" class="chart-container">
+                <div class="loading">图表加载中...</div>
+            </div>
         </div>
 
         <div id="Principles" class="tabcontent">
             <h2>民法核心原则关系</h2>
-            <div id="principles-chart" class="chart-container"></div>
+            <div id="principles-chart" class="chart-container">
+                <div class="loading">图表加载中...</div>
+            </div>
         </div>
         
         <div class="footer">
-            <p>民法体系图谱</p>
+            <p>© 2023 民法体系图谱 | 基于ECharts可视化</p>
         </div>
     </div>
 
@@ -184,6 +238,15 @@
         window.civilChartRendered = false;
         window.historyChartRendered = false;
         window.principlesChartRendered = false;
+
+        // 移除加载提示
+        function removeLoading(chartId) {
+            const chartContainer = document.getElementById(chartId);
+            const loadingElement = chartContainer.querySelector('.loading');
+            if (loadingElement) {
+                loadingElement.style.display = 'none';
+            }
+        }
 
         // 渲染体系总览图
         function renderSystemChart() {
@@ -405,6 +468,7 @@
             };
 
             myChart.setOption(option);
+            removeLoading('system-chart');
             
             // 窗口调整大小时重置图表尺寸
             window.addEventListener('resize', function() {
@@ -492,6 +556,7 @@
             };
 
             myChart.setOption(option);
+            removeLoading('civil-chart');
             
             // 创建图例
             createCivilLegend(civilData);
@@ -606,6 +671,7 @@
             };
 
             myChart.setOption(option);
+            removeLoading('history-chart');
             
             // 窗口调整大小时重置图表尺寸
             window.addEventListener('resize', function() {
@@ -758,6 +824,7 @@
             };
 
             myChart.setOption(option);
+            removeLoading('principles-chart');
             
             // 窗口调整大小时重置图表尺寸
             window.addEventListener('resize', function() {
